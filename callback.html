@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Autenticando...</title>
+    <title>Conectando...</title>
 </head>
-<body style="background:#000; color:#0f0; font-family:monospace; padding: 20px;">
-    <h2>Tentando autenticação com novo segredo...</h2>
+<body style="background:#000; color:#fff; font-family:monospace; padding: 20px;">
+    <h2>Processando autenticação...</h2>
     <div id="status"></div>
 
     <script>
@@ -14,30 +14,29 @@
             const code = params.get('code');
             const debug = document.getElementById('status');
 
-            if (!code) { debug.innerText = "Erro: Código não encontrado."; return; }
+            if (!code) { debug.innerText = "Erro: Sem código na URL. Tente logar novamente do zero."; return; }
 
             const clientId = '01KM22VQ7Y1ZYN9WP8E1746HVZ';
-            // Novo segredo inserido:
             const clientSecret = 'e4e3a5bd8c4045d998002db081ebc55d20756048a92bbb9ee369e71acd9e9f4d'; 
             const redirectUri = 'https://felipefariastv.github.io/FelipeFariasTV/callback.html';
             const verifier = localStorage.getItem('kick_pkce_verifier');
 
-            // Autenticação Basic (Obrigatória para a Kick aceitar o Secret)
-            const authString = btoa(`${clientId}:${clientSecret}`);
+            debug.innerHTML = "➤ Enviando pedido para a Kick...";
 
             try {
+                // A Kick exige x-www-form-urlencoded
+                const bodyParams = new URLSearchParams();
+                bodyParams.append('grant_type', 'authorization_code');
+                bodyParams.append('client_id', clientId);
+                bodyParams.append('client_secret', clientSecret);
+                bodyParams.append('code', code);
+                bodyParams.append('redirect_uri', redirectUri);
+                bodyParams.append('code_verifier', verifier);
+
                 const response = await fetch('https://id.kick.com/oauth/token', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Authorization': `Basic ${authString}`
-                    },
-                    body: new URLSearchParams({
-                        grant_type: 'authorization_code',
-                        code: code,
-                        redirect_uri: redirectUri,
-                        code_verifier: verifier
-                    })
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: bodyParams
                 });
 
                 const rawResponse = await response.text();
@@ -47,7 +46,7 @@
                     localStorage.setItem('kick_access_token', data.access_token);
                     window.location.href = 'fariassim.html';
                 } else {
-                    debug.innerHTML = `❌ A KICK REJEITOU O LOGIN.<br><br>Status: ${response.status}<br>Erro: ${rawResponse}`;
+                    debug.innerHTML = `❌ A KICK REJEITOU O PEDIDO.<br><br>Status: ${response.status}<br>Resposta:<br>${rawResponse}<br><br><b>Dica: Se deu 'invalid_grant', é porque você está tentando usar o mesmo código pela segunda vez. Volte ao index.html e clique em logar de novo!</b>`;
                 }
             } catch (err) {
                 debug.innerText = "Erro de conexão: " + err.message;
