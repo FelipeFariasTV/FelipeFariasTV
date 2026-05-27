@@ -5,7 +5,7 @@
     <title>Autenticando...</title>
 </head>
 <body style="background:#0b0e14; color:#53fc18; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; text-align: center; padding: 20px;">
-    <div id="status">Trocando código por token, aguarde...</div>
+    <div id="status">Trocando código por token...</div>
 
     <script>
         async function finalizarLogin() {
@@ -13,41 +13,44 @@
             const code = params.get('code');
             const statusDiv = document.getElementById('status');
 
-            if (!code) { statusDiv.innerText = "Erro: Código não encontrado na URL."; return; }
+            if (!code) { statusDiv.innerText = "Erro: Código não encontrado."; return; }
 
             const clientId = '01KM22VQ7Y1ZYN9WP8E1746HVZ';
-            // O link precisa ser exatamente o que você cadastrou no painel da Kick
+            // O segredo é OBRIGATÓRIO.
+            const clientSecret = '0ff92471284ba3df3bf2232595cae40c76d76869862a2a145cfa350cc837b995'; 
             const redirectUri = 'https://felipefariastv.github.io/FelipeFariasTV/callback.html';
             const verifier = localStorage.getItem('kick_pkce_verifier');
 
             try {
-                // Tenta trocar o código pelo token SEM o client_secret (Padrão PKCE para Web)
+                // Trocando código com o secret de volta
                 const response = await fetch('https://id.kick.com/oauth/token', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         grant_type: 'authorization_code',
                         client_id: clientId,
+                        client_secret: clientSecret,
                         code: code,
                         redirect_uri: redirectUri,
                         code_verifier: verifier
                     })
                 });
 
-                // Captura a resposta do servidor
-                const data = await response.json();
+                // Lemos como texto primeiro para não quebrar se vier um erro
+                const responseText = await response.text();
                 
                 if (response.ok) {
+                    const data = JSON.parse(responseText);
                     localStorage.setItem('kick_access_token', data.access_token);
                     window.location.href = 'fariassim.html';
                 } else {
-                    // Se der erro, mostra exatamente o que aconteceu
+                    // Mostra o erro real que veio da Kick
                     statusDiv.style.color = "red";
-                    statusDiv.innerText = "Erro " + response.status + ": " + JSON.stringify(data);
+                    statusDiv.innerText = "Erro da Kick: " + responseText;
                 }
             } catch (err) {
                 statusDiv.style.color = "red";
-                statusDiv.innerText = "Erro de rede ou bloqueio CORS: " + err.message;
+                statusDiv.innerText = "Erro de conexão: " + err.message;
             }
         }
         finalizarLogin();
