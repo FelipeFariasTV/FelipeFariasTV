@@ -5,7 +5,7 @@
     <title>Autenticando...</title>
 </head>
 <body style="background:#000; color:#0f0; font-family:monospace; padding: 20px;">
-    <h2>Tentando autenticação...</h2>
+    <h2>Tentando autenticação com novo segredo...</h2>
     <div id="status"></div>
 
     <script>
@@ -17,11 +17,12 @@
             if (!code) { debug.innerText = "Erro: Código não encontrado."; return; }
 
             const clientId = '01KM22VQ7Y1ZYN9WP8E1746HVZ';
-            const clientSecret = '0ff92471284ba3df3bf2232595cae40c76d76869862a2a145cfa350cc837b995'; 
+            // Novo segredo inserido:
+            const clientSecret = 'e4e3a5bd8c4045d998002db081ebc55d20756048a92bbb9ee369e71acd9e9f4d'; 
             const redirectUri = 'https://felipefariastv.github.io/FelipeFariasTV/callback.html';
             const verifier = localStorage.getItem('kick_pkce_verifier');
 
-            // Criar o token de autenticação Basic (Base64)
+            // Autenticação Basic (Obrigatória para a Kick aceitar o Secret)
             const authString = btoa(`${clientId}:${clientSecret}`);
 
             try {
@@ -29,7 +30,7 @@
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/x-www-form-urlencoded',
-                        'Authorization': `Basic ${authString}` // AUTENTICAÇÃO VIA CABEÇALHO
+                        'Authorization': `Basic ${authString}`
                     },
                     body: new URLSearchParams({
                         grant_type: 'authorization_code',
