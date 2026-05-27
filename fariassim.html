@@ -2,18 +2,16 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>FariasSim TV - Portal Oficial</title>
+    <title>FariasSim TV - Oficial</title>
     <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
     <style>
         body { background: #0b0e14; color: white; display: flex; height: 100vh; margin: 0; font-family: sans-serif; }
         .video { flex-grow: 1; display: flex; flex-direction: column; }
         iframe { width: 100%; height: 100%; border: none; }
         .chat-area { width: 350px; display: flex; flex-direction: column; border-left: 1px solid #2d313b; background: #191b20; }
-        
         #chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; font-size: 14px; }
         .msg { margin-bottom: 8px; line-height: 1.4; word-wrap: break-word; }
         .user { color: #53fc18; font-weight: bold; }
-        
         .input-box { padding: 15px; background: #0b0e14; border-top: 1px solid #2d313b; display: flex; gap: 10px; flex-direction: column; }
         .input-row { display: flex; gap: 10px; }
         input { flex-grow: 1; padding: 10px; border-radius: 4px; border: 1px solid #333; background: #222; color: white; }
@@ -22,13 +20,10 @@
     </style>
 </head>
 <body>
-    <div class="video">
-        <iframe src="https://player.kick.com/felipefariastv" allowfullscreen></iframe>
-    </div>
+    <div class="video"><iframe src="https://player.kick.com/felipefariastv" allowfullscreen></iframe></div>
     <div class="chat-area">
-        <div id="status-leitura">⏳ Conectando ao chat... (Libere o rastreamento no navegador)</div>
+        <div id="status-leitura">⏳ Conectando ao chat...</div>
         <div id="chat-messages"></div>
-        
         <div class="input-box">
             <div id="area-digitar" class="input-row">
                 <input type="text" id="msg" placeholder="Mande uma mensagem..." onkeypress="if(event.key === 'Enter') enviar()">
@@ -36,73 +31,37 @@
             </div>
         </div>
     </div>
-
     <script>
-        // VERIFICAÇÃO DO LOGIN
         const token = localStorage.getItem('kick_access_token');
-        
-        if (!token) {
-            // Se não tiver logado, troca a área de digitar pelo botão de login
-            document.getElementById('area-digitar').innerHTML = `<button style="width:100%" onclick="window.location.href='index.html'">Entrar com a Kick</button>`;
-        }
+        if (!token) { document.getElementById('area-digitar').innerHTML = `<button style="width:100%" onclick="window.location.href='index.html'">Entrar com a Kick</button>`; }
 
-        // TÚNEL DE LEITURA (PUSHER) - COM A CHAVE NOVA DA KICK
-        const chatDiv = document.getElementById('chat-messages');
         const pusher = new Pusher('32cbd69e4b950bf97679', { cluster: 'us2', forceTLS: true });
         const channel = pusher.subscribe('chatrooms.1856744.v2'); 
-
-        // Muda a cor do aviso para verde quando conectar
         pusher.connection.bind('state_change', function(states) {
-            const statusLeitura = document.getElementById('status-leitura');
-            if (states.current === 'connected') {
-                statusLeitura.innerText = "🟢 Chat lendo em tempo real!";
-                statusLeitura.style.color = "#53fc18";
-            }
+            if (states.current === 'connected') { document.getElementById('status-leitura').innerText = "🟢 Chat online!"; document.getElementById('status-leitura').style.color = "#53fc18"; }
         });
-
-        // Adiciona as mensagens na tela
         channel.bind('App\\Events\\ChatMessageEvent', function(data) {
             const div = document.createElement('div');
             div.className = 'msg';
             div.innerHTML = `<span class="user">${data.sender.username}:</span> ${data.content}`;
+            const chatDiv = document.getElementById('chat-messages');
             chatDiv.appendChild(div);
             chatDiv.scrollTop = chatDiv.scrollHeight;
         });
 
-        // ENVIO DE MENSAGEM (A Rota Vitoriosa V1)
         async function enviar() {
             const input = document.getElementById('msg');
             const content = input.value.trim();
             if (!content) return;
-            
             input.value = '';
-            input.placeholder = 'Enviando...';
-
             try {
                 const res = await fetch('https://api.kick.com/public/v1/chat', {
                     method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`, 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        broadcaster_user_id: 1916692,
-                        content: content,
-                        type: "user"
-                    })
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ broadcaster_user_id: 1916692, content: content, type: "user" })
                 });
-
-                if (res.ok) {
-                    input.placeholder = 'Mande uma mensagem...';
-                } else {
-                    alert("A Kick recusou a mensagem. Tente logar novamente.");
-                    input.placeholder = 'Mande uma mensagem...';
-                }
-            } catch (e) {
-                alert("Erro de conexão com a Kick.");
-                input.placeholder = 'Mande uma mensagem...';
-            }
+                if (!res.ok) alert("Erro ao enviar mensagem.");
+            } catch (e) { alert("Erro de conexão."); }
         }
     </script>
 </body>
