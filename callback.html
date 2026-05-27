@@ -5,23 +5,19 @@
     <title>Autenticando...</title>
 </head>
 <body style="background:#0b0e14; color:#53fc18; display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
-    <div id="status">Trocando código por token de acesso, aguarde...</div>
+    <div id="status">Trocando código por token...</div>
 
     <script>
         async function finalizarLogin() {
             const params = new URLSearchParams(window.location.search);
             const code = params.get('code');
-
-            if (!code) {
-                document.getElementById('status').innerText = "Erro: Código não encontrado na URL.";
-                return;
-            }
+            if (!code) { document.getElementById('status').innerText = "Erro: Código não encontrado."; return; }
 
             const clientId = '01KM22VQ7Y1ZYN9WP8E1746HVZ';
             const clientSecret = '0ff92471284ba3df3bf2232595cae40c76d76869862a2a145cfa350cc837b995'; 
-            const redirectUri = 'http://localhost:5500/callback.html';
             
-            // Resgata o verificador que o index.html salvou
+            // LINK OFICIAL GITHUB
+            const redirectUri = 'https://felipefariastv.github.io/FelipeFariasTV/callback.html';
             const verifier = localStorage.getItem('kick_pkce_verifier');
 
             try {
@@ -34,20 +30,10 @@
                         client_secret: clientSecret,
                         code: code,
                         redirect_uri: redirectUri,
-                        code_verifier: verifier // A Kick exige isso agora!
+                        code_verifier: verifier
                     })
                 });
-
-                const textoResposta = await response.text();
-                
-                let data;
-                try {
-                    data = JSON.parse(textoResposta);
-                } catch (e) {
-                    document.getElementById('status').innerText = "A Kick retornou um erro: " + textoResposta;
-                    return;
-                }
-
+                const data = await response.json();
                 if (data.access_token) {
                     localStorage.setItem('kick_access_token', data.access_token);
                     window.location.href = 'fariassim.html';
@@ -55,10 +41,9 @@
                     document.getElementById('status').innerText = "Erro na troca: " + JSON.stringify(data);
                 }
             } catch (err) {
-                document.getElementById('status').innerText = "Erro de conexão: " + err.message;
+                document.getElementById('status').innerText = "Erro: " + err.message;
             }
         }
-
         finalizarLogin();
     </script>
 </body>
