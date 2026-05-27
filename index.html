@@ -7,7 +7,6 @@
         body { background-color: #0b0e14; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .box { text-align: center; padding: 30px; border: 1px solid #2d313b; border-radius: 8px; background: #191b20; }
         .btn { background-color: #53fc18; color: black; padding: 15px 30px; border: none; font-size: 16px; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background-color: #40c710; }
     </style>
 </head>
 <body>
@@ -18,7 +17,6 @@
     </div>
 
     <script>
-        // Função para gerar o código aleatório (PKCE)
         function generateRandomString(length) {
             const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
             let result = '';
@@ -28,7 +26,6 @@
             return result;
         }
 
-        // Função para criptografar o código no formato S256 que a Kick obriga
         async function generateCodeChallenge(verifier) {
             const encoder = new TextEncoder();
             const data = encoder.encode(verifier);
@@ -39,23 +36,17 @@
 
         async function iniciarLogin() {
             const btn = document.querySelector('.btn');
-            btn.innerText = "Carregando a ponte com a Kick...";
-            
-            // 1. Gera a chave e salva no navegador
+            btn.innerText = "Carregando...";
             const verifier = generateRandomString(64);
             localStorage.setItem('kick_pkce_verifier', verifier);
-            
-            // 2. Transforma na criptografia
             const challenge = await generateCodeChallenge(verifier);
-
-            // 3. Seus dados oficias
             const clientId = '01KM22VQ7Y1ZYN9WP8E1746HVZ';
-            const redirectUri = 'http://localhost:5500/callback.html';
+            
+            // LINK OFICIAL GITHUB
+            const redirectUri = 'https://felipefariastv.github.io/FelipeFariasTV/callback.html';
             const scope = 'user:read channel:read chat:write';
             
-            // 4. Manda pra Kick (agora com o code_challenge, sem chance de 404)
             const url = `https://id.kick.com/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=farias_sim_teste&code_challenge=${challenge}&code_challenge_method=S256`;
-            
             window.location.href = url;
         }
     </script>
